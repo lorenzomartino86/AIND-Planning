@@ -48,7 +48,6 @@ class AirCargoProblem(Problem):
             list of Action objects
         """
 
-        # TODO create concrete Action objects based on the domain action schema for: Load, Unload, and Fly
         # concrete actions definition: specific literal action that does not include variables as with the schema
         # for example, the action schema 'Load(c, p, a)' can represent the concrete actions 'Load(C1, P1, SFO)'
         # or 'Load(C2, P2, JFK)'.  The actions for the planning problem must be concrete because the problems in
@@ -174,11 +173,8 @@ class AirCargoProblem(Problem):
         :param action: Action applied
         :return: resulting state after action
         """
-        if action not in self.actions(state):
-            raise ValueError("action not allowed")
 
         fluent_state = decode_state(state, self.state_map)
-
 
         #  Starting in state s, the result of executing
         #  an applicable action is a state s' that is the same
@@ -188,24 +184,18 @@ class AirCargoProblem(Problem):
         #      At(P1, SFO) & At(P2, SFO) & Plane(P1) & Plane(P2) & Airport(JFK) & Airport(SFO)
 
         state_pos = [positive_clause
-                    if positive_clause not in action.effect_rem
-                    else None
-                    for positive_clause in fluent_state.pos]
+                    for positive_clause in fluent_state.pos
+                    if positive_clause not in action.effect_rem]
+        state_pos = state_pos + [positive_clause
+                                for positive_clause in action.effect_add
+                                if positive_clause not in state_pos]
 
         state_neg = [negative_clause
-                     if negative_clause not in action.effect_add
-                     else None
-                     for negative_clause in fluent_state.neg]
-
-        state_pos = state_pos + [positive_clause
-                                if positive_clause not in state_pos else None
-                                for positive_clause in action.effect_add]
-        state_pos = [state for state in state_pos if state is not None]
-
+                     for negative_clause in fluent_state.neg
+                     if negative_clause not in action.effect_add]
         state_neg = state_neg + [negative_clause
-                                 if negative_clause not in state_neg else None
-                                 for negative_clause in action.effect_rem]
-        state_neg = [state for state in state_neg if state is not None]
+                                 for negative_clause in action.effect_rem
+                                 if negative_clause not in state_neg]
 
         new_state = FluentState(state_pos, state_neg)
 
