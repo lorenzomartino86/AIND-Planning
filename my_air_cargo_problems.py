@@ -174,8 +174,41 @@ class AirCargoProblem(Problem):
         :param action: Action applied
         :return: resulting state after action
         """
-        # TODO implement
-        new_state = FluentState([], [])
+        if action not in self.actions(state):
+            raise ValueError("action not allowed")
+
+        fluent_state = decode_state(state, self.state_map)
+
+
+        #  Starting in state s, the result of executing
+        #  an applicable action is a state s' that is the same
+        #  as s except that any positive literal P in the effect of action
+        #  is added to s' and any negative literal notP is removed from s'.
+        #  After Fly(P1, JFK, SFO), the current state becomes:
+        #      At(P1, SFO) & At(P2, SFO) & Plane(P1) & Plane(P2) & Airport(JFK) & Airport(SFO)
+
+        state_pos = [positive_clause
+                    if positive_clause not in action.effect_rem
+                    else None
+                    for positive_clause in fluent_state.pos]
+
+        state_neg = [negative_clause
+                     if negative_clause not in action.effect_add
+                     else None
+                     for negative_clause in fluent_state.neg]
+
+        state_pos = state_pos + [positive_clause
+                                if positive_clause not in state_pos else None
+                                for positive_clause in action.effect_add]
+        state_pos = [state for state in state_pos if state is not None]
+
+        state_neg = state_neg + [negative_clause
+                                 if negative_clause not in state_neg else None
+                                 for negative_clause in action.effect_rem]
+        state_neg = [state for state in state_neg if state is not None]
+
+        new_state = FluentState(state_pos, state_neg)
+
         return encode_state(new_state, self.state_map)
 
     def goal_test(self, state: str) -> bool:
