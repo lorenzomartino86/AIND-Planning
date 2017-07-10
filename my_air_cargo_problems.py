@@ -240,26 +240,17 @@ class AirCargoProblem(Problem):
         """
         # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
 
-        print (node, node.state)
         current_state = node.state
+        count = 0
 
         if self.goal_test(current_state):
-            return 0
+            return count
 
-        unsatisfied_goals = [goal for goal in self.goal]
-        print ("state_map=", self.state_map)
-        print ("unsatisfied_goals=", unsatisfied_goals)
+        for goal in self.goal:
+            goal_in_current_state_index = self.state_map.index(goal)
+            if current_state[goal_in_current_state_index] is 'F':
+                count += 1
 
-
-
-
-
-        print ("actions by state")
-        for action in self.actions(node.state):
-            print ("action -> ", action)
-
-        count = len(self.actions(node.state))
-        exit()
         return count
 
 
