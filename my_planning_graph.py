@@ -475,10 +475,10 @@ class PlanningGraph():
         :return: bool
         """
 
-        a1_precond = node_a1.parents
-        a2_precond = node_a2.parents
-        if a1_precond.is_mutex(a2_precond):
-            return True
+        for a1_precond in node_a1.parents:
+            for a2_precond in node_a2.parents:
+                if a1_precond.is_mutex(a2_precond):
+                    return True
         return False
 
     def update_s_mutex(self, nodeset: set):
