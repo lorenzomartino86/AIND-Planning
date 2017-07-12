@@ -311,31 +311,38 @@ class PlanningGraph():
         #   to see if a proposed PgNode_a has prenodes that are a subset of the previous S level.  Once an
         #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
 
-        # Determine PgNode_a as action
+        # Determine persistence and effective actions
         persistence_actions = list()
         change_state_actions = list()
         for action in self.all_actions:
+            # Persistence actions are the actions where
+            # for every literal C they get precondition C
+            # and effect C
             if action.precond_neg == action.effect_rem or \
-                action.precond_pos == action.effect_add:
+               action.precond_pos == action.effect_add:
                 persistence_actions.append(PgNode_a(action))
             else:
+                # Determine effective actions in which
+                # for every literal C we have that C is the
+                # precondition for that action
                 for nodeS in self.s_levels[level]:
                     precond, is_pos = nodeS.symbol, nodeS.is_pos
                     if is_pos and precond in action.precond_pos:
                         print ("added action", str(action))
-                        change_state_actions.append(PgNode_a(action))
-                    elif not is_pos and precond in action.precond_neg:
-                        change_state_actions.append(PgNode_a(action))
-                        print ("added negative action", str(action))
+                        self._enrich_action_node(action, change_state_actions, nodeS)
+                        print (change_state_actions)
         actions = persistence_actions + change_state_actions
 
         for action in actions:
-            print ("prenodes", action.prenodes)
-        exit()
+            print ("action", action.show())
 
         self.a_levels.append(persistence_actions + change_state_actions)
-        print (self.a_levels)
 
+    def _enrich_action_node(self, action, change_state_actions, nodeS):
+        nodeA = PgNode_a(action)
+        nodeS.children.add(nodeA)
+        nodeA.parents.add(nodeS)
+        change_state_actions.append(nodeA)
 
     def add_literal_level(self, level):
         """ add an S (literal) level to the Planning Graph
@@ -354,7 +361,13 @@ class PlanningGraph():
         #   may be "added" to the set without fear of duplication.  However, it is important to then correctly create and connect
         #   all of the new S nodes as children of all the A nodes that could produce them, and likewise add the A nodes to the
         #   parent sets of the S nodes
-        print ("adding literal level")
+        setOfNodeS = set()
+        for nodeA in self.a_levels[level-1]:
+            for nodeS in nodeA.effnodes:
+                setOfNodeS.add(nodeS)
+                nodeS.parents.add(nodeA)
+                nodeA.children.add(nodeS)
+        self.s_levels.append(setOfNodeS)
 
 
     def update_a_mutex(self, nodeset):
@@ -413,7 +426,7 @@ class PlanningGraph():
         :param node_a2: PgNode_a
         :return: bool
         """
-        # TODO test for Inconsistent Effects between nodes
+
         return False
 
     def interference_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
