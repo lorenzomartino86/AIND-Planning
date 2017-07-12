@@ -328,15 +328,9 @@ class PlanningGraph():
                 for nodeS in self.s_levels[level]:
                     precond, is_pos = nodeS.symbol, nodeS.is_pos
                     if is_pos and precond in action.precond_pos:
-                        print ("added action", str(action))
                         self._enrich_action_node(action, change_state_actions, nodeS)
-                        print (change_state_actions)
         actions = persistence_actions + change_state_actions
-
-        for action in actions:
-            print ("action", action.show())
-
-        self.a_levels.append(persistence_actions + change_state_actions)
+        self.a_levels.append(actions)
 
     def _enrich_action_node(self, action, change_state_actions, nodeS):
         nodeA = PgNode_a(action)
@@ -426,6 +420,15 @@ class PlanningGraph():
         :param node_a2: PgNode_a
         :return: bool
         """
+        a1_effect_rem = node_a1.action.effect_rem
+        a1_effect_add = node_a1.action.effect_add
+
+        a2_effect_rem = node_a2.action.effect_rem
+        a2_effect_add = node_a2.action.effect_add
+
+        if a1_effect_add == a2_effect_rem or \
+           a1_effect_rem == a2_effect_add:
+            return True
 
         return False
 
@@ -443,7 +446,22 @@ class PlanningGraph():
         :param node_a2: PgNode_a
         :return: bool
         """
-        # TODO test for Interference between nodes
+        a1_effect_rem = node_a1.action.effect_rem
+        a1_effect_add = node_a1.action.effect_add
+        a1_precond_pos = node_a1.action.precond_pos
+        a1_precond_neg = node_a1.action.precond_neg
+
+        a2_effect_rem = node_a2.action.effect_rem
+        a2_effect_add = node_a2.action.effect_add
+        a2_precond_pos = node_a2.action.precond_pos
+        a2_precond_neg = node_a2.action.precond_neg
+
+        if a1_effect_add == a2_precond_neg or \
+           a1_effect_rem == a2_precond_pos or \
+           a2_effect_add == a1_precond_neg or \
+           a2_effect_rem == a1_precond_pos:
+            return True
+
         return False
 
     def competing_needs_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
@@ -457,7 +475,10 @@ class PlanningGraph():
         :return: bool
         """
 
-        # TODO test for Competing Needs between nodes
+        a1_precond = node_a1.parents
+        a2_precond = node_a2.parents
+        if a1_precond.is_mutex(a2_precond):
+            return True
         return False
 
     def update_s_mutex(self, nodeset: set):
@@ -492,7 +513,9 @@ class PlanningGraph():
         :param node_s2: PgNode_s
         :return: bool
         """
-        # TODO test for negation between nodes
+        if node_s1.symbol == node_s2.symbol and \
+           node_s1.is_pos is not node_s2.is_pos:
+            return True
         return False
 
     def inconsistent_support_mutex(self, node_s1: PgNode_s, node_s2: PgNode_s):
