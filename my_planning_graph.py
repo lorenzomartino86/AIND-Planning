@@ -327,9 +327,14 @@ class PlanningGraph():
                     elif not is_pos and precond in action.precond_neg:
                         change_state_actions.append(PgNode_a(action))
                         print ("added negative action", str(action))
+        actions = persistence_actions + change_state_actions
+
+        for action in actions:
+            print ("prenodes", action.prenodes)
+        exit()
+
         self.a_levels.append(persistence_actions + change_state_actions)
         print (self.a_levels)
-
 
 
     def add_literal_level(self, level):
@@ -350,6 +355,7 @@ class PlanningGraph():
         #   all of the new S nodes as children of all the A nodes that could produce them, and likewise add the A nodes to the
         #   parent sets of the S nodes
         print ("adding literal level")
+
 
     def update_a_mutex(self, nodeset):
         """ Determine and update sibling mutual exclusion for A-level nodes
