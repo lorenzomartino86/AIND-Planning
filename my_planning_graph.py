@@ -312,20 +312,23 @@ class PlanningGraph():
         #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
 
         # Determine PgNode_a as action
+        persistence_actions = list()
+        change_state_actions = list()
         for action in self.all_actions:
-            nodeA = PgNode_a(action)
-            s_level = self.s_levels[level]
-            for nodeS in s_level:
-                prenodes = nodeA.prenodes
-                if prenodes.__eq__(nodeS):
-                    self.a_levels.append(nodeA)
-                    nodeS.children.add(nodeA)
-                    nodeA.parents.add(nodeS)
-                print ("nodeA", nodeA.show())
-                print ("nodeS", nodeS.show())
-
-
-
+            if action.precond_neg == action.effect_rem or \
+                action.precond_pos == action.effect_add:
+                persistence_actions.append(PgNode_a(action))
+            else:
+                for nodeS in self.s_levels[level]:
+                    precond, is_pos = nodeS.symbol, nodeS.is_pos
+                    if is_pos and precond in action.precond_pos:
+                        print ("added action", str(action))
+                        change_state_actions.append(PgNode_a(action))
+                    elif not is_pos and precond in action.precond_neg:
+                        change_state_actions.append(PgNode_a(action))
+                        print ("added negative action", str(action))
+        self.a_levels.append(persistence_actions + change_state_actions)
+        print (self.a_levels)
 
 
 
@@ -346,6 +349,7 @@ class PlanningGraph():
         #   may be "added" to the set without fear of duplication.  However, it is important to then correctly create and connect
         #   all of the new S nodes as children of all the A nodes that could produce them, and likewise add the A nodes to the
         #   parent sets of the S nodes
+        print ("adding literal level")
 
     def update_a_mutex(self, nodeset):
         """ Determine and update sibling mutual exclusion for A-level nodes
