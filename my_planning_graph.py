@@ -303,7 +303,6 @@ class PlanningGraph():
         :return:
             adds A nodes to the current level in self.a_levels[level]
         """
-        # TODO add action A level to the planning graph as described in the Russell-Norvig text
         # 1. determine what actions to add and create those PgNode_a objects
         # 2. connect the nodes to the previous S literal level
         # for example, the A0 level will iterate through all possible actions for the problem and add a PgNode_a to a_levels[0]
@@ -312,24 +311,19 @@ class PlanningGraph():
         #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
 
         # Determine persistence and effective actions
-        persistence_actions = list()
         change_state_actions = list()
-        for action in self.all_actions:
-            # Persistence actions are the actions where
-            # for every literal C they get precondition C
-            # and effect C
-            if action.precond_neg == action.effect_rem or \
-               action.precond_pos == action.effect_add:
-                persistence_actions.append(PgNode_a(action))
-            else:
+        for nodeS in self.s_levels[level]:
+            nodeS.show()
+            for action in self.all_actions:
                 # Determine effective actions in which
                 # for every literal C we have that C is the
                 # precondition for that action
-                for nodeS in self.s_levels[level]:
-                    precond, is_pos = nodeS.symbol, nodeS.is_pos
-                    if is_pos and precond in action.precond_pos:
-                        self._enrich_action_node(action, change_state_actions, nodeS)
-        actions = persistence_actions + change_state_actions
+                precond, is_pos = nodeS.symbol, nodeS.is_pos
+                if is_pos and precond in action.precond_pos or \
+                        (not is_pos and precond in action.precond_neg):
+                    self._enrich_action_node(action, change_state_actions, nodeS)
+
+        actions = change_state_actions
         self.a_levels.append(actions)
 
     def _enrich_action_node(self, action, change_state_actions, nodeS):
@@ -446,23 +440,21 @@ class PlanningGraph():
         :param node_a2: PgNode_a
         :return: bool
         """
-        a1_effect_rem = node_a1.action.effect_rem
-        a1_effect_add = node_a1.action.effect_add
-        a1_precond_pos = node_a1.action.precond_pos
-        a1_precond_neg = node_a1.action.precond_neg
+        def check_effect_on_precondition(preconds, effects):
+            for effect in effects:
+                if effect in preconds:
+                    return True
+            return False
 
-        a2_effect_rem = node_a2.action.effect_rem
-        a2_effect_add = node_a2.action.effect_add
-        a2_precond_pos = node_a2.action.precond_pos
-        a2_precond_neg = node_a2.action.precond_neg
+        return check_effect_on_precondition(node_a2.action.precond_neg,
+                                            node_a1.action.effect_add)   or \
+                check_effect_on_precondition(node_a1.action.precond_neg,
+                                             node_a2.action.effect_add)  or \
+                check_effect_on_precondition(node_a2.action.precond_pos,
+                                              node_a1.action.effect_rem) or \
+                check_effect_on_precondition(node_a1.action.precond_pos,
+                                             node_a2.action.effect_rem)
 
-        if a1_effect_add == a2_precond_neg or \
-           a1_effect_rem == a2_precond_pos or \
-           a2_effect_add == a1_precond_neg or \
-           a2_effect_rem == a1_precond_pos:
-            return True
-
-        return False
 
     def competing_needs_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
         """
@@ -549,27 +541,19 @@ class PlanningGraph():
 
         def find_goal_inside_level(states, goal):
             for state in states:
-                print ("state.symbol", state.symbol, "goal", goal)
                 if state.symbol == goal:
-                    print ("Found")
                     return True
 
 
         def find_goal_through_levels(levels, goal):
             for level in levels:
-                print ("level", level)
                 if find_goal_inside_level(self.s_levels[level], goal):
                     return level
 
-
-
         # for each goal in the problem, determine the level cost, then add them together
-        print ("goals", self.problem.goal)
-
         for goal in self.problem.goal:
             levels = find_goal_through_levels(range(len(self.s_levels)), goal)
             level_sum += levels
-
 
         return level_sum
 
