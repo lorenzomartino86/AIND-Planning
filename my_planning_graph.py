@@ -547,6 +547,32 @@ class PlanningGraph():
         """
         level_sum = 0
 
+        def find_goal_inside_level(states, goal):
+            for state in states:
+                print ("state.symbol", state.symbol, "goal", goal)
+                if state.symbol == goal:
+                    print ("Found")
+                    return True
+
+
+        def find_goal_through_levels(levels, goal):
+            for level in levels:
+                print ("level", level)
+                if find_goal_inside_level(self.s_levels[level], goal):
+                    return level
+
+
+
         # for each goal in the problem, determine the level cost, then add them together
+        print ("goals", self.problem.goal)
+
+        for goal in self.problem.goal:
+            levels = find_goal_through_levels(range(len(self.s_levels)), goal)
+            level_sum += levels
+
 
         return level_sum
+
+
+
+
