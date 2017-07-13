@@ -341,7 +341,6 @@ class PlanningGraph():
         :return:
             adds S nodes to the current level in self.s_levels[level]
         """
-        # TODO add literal S level to the planning graph as described in the Russell-Norvig text
         # 1. determine what literals to add
         # 2. connect the nodes
         # for example, every A node in the previous level has a list of S nodes in effnodes that represent the effect
@@ -539,22 +538,18 @@ class PlanningGraph():
         level_sum = 0
 
         def find_goal_inside_level(states, goal):
-            print ("states", states)
             goal = PgNode_s(symbol=goal, is_pos=True)
             for state in states:
-                print("state.symbol", state.symbol, "goal", goal)
                 if goal.__eq__(state):
                     return True
 
         def find_goal_through_levels(levels, goal):
             for level in levels:
-                print("level", level)
                 if find_goal_inside_level(self.s_levels[level], goal):
                     return level
             return level
 
         # for each goal in the problem, determine the level cost, then add them together
-        print("goals", self.problem.goal)
         for goal in self.problem.goal:
             level_sum += find_goal_through_levels(range(len(self.s_levels)), goal)
 
