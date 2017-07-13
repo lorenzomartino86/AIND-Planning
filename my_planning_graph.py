@@ -534,26 +534,29 @@ class PlanningGraph():
 
     def h_levelsum(self) -> int:
         """The sum of the level costs of the individual goals (admissible if goals independent)
-
         :return: int
         """
         level_sum = 0
 
         def find_goal_inside_level(states, goal):
+            print ("states", states)
+            goal = PgNode_s(symbol=goal, is_pos=True)
             for state in states:
-                if state.symbol == goal:
+                print("state.symbol", state.symbol, "goal", goal)
+                if goal.__eq__(state):
                     return True
-
 
         def find_goal_through_levels(levels, goal):
             for level in levels:
+                print("level", level)
                 if find_goal_inside_level(self.s_levels[level], goal):
                     return level
+            return level
 
         # for each goal in the problem, determine the level cost, then add them together
+        print("goals", self.problem.goal)
         for goal in self.problem.goal:
-            levels = find_goal_through_levels(range(len(self.s_levels)), goal)
-            level_sum += levels
+            level_sum += find_goal_through_levels(range(len(self.s_levels)), goal)
 
         return level_sum
 
