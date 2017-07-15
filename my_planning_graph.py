@@ -313,7 +313,6 @@ class PlanningGraph():
         # Determine persistence and effective actions
         change_state_actions = list()
         for nodeS in self.s_levels[level]:
-            nodeS.show()
             for action in self.all_actions:
                 # Determine effective actions in which
                 # for every literal C we have that C is the
